@@ -1,0 +1,22 @@
+{
+  "name": "Export Point Cloud Episodes to SemanticKITTI",
+  "type": "app",
+  "version": "2.0.0",
+  "instance_version": "6.15.60",
+  "categories": ["pointclouds", "export"],
+  "context_menu": {
+    "target": ["point_cloud_episodes_project", "point_cloud_episodes_dataset"],
+    "context_root": "Download as"
+  },
+  "modal_template": "src/modal.html",
+  "modal_template_state": {},
+  "modal_width": 700,
+  "description": "Export Point Cloud Episodes to SemanticKITTI format with semantic labels",
+  "docker_image": "supervisely/import-export:6.73.560",
+  "main_script": "src/main.py",
+  "task_location": "workspace_tasks",
+  "headless": true,
+  "icon_cover": true,
+  "icon": "https://github.com/supervisely-ecosystem/export-to-semantic-kitti/releases/download/v0.0.1/export_semantic_kitti_icon.png",
+  "poster": "https://github.com/supervisely-ecosystem/export-to-semantic-kitti/releases/download/v0.0.1/export_semantic_kitti_poster.png"
+}
