@@ -1,12 +1,48 @@
-import re
 from pathlib import Path
-from typing import Union, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import supervisely as sly
 from tqdm import tqdm
 
 import src.globals as g
+
+SEMANTIC_KITTI_LABEL_MAP = {
+    "unlabeled": 0,
+    "outlier": 1,
+    "car": 10,
+    "bicycle": 11,
+    "bus": 13,
+    "motorcycle": 15,
+    "on-rails": 16,
+    "truck": 18,
+    "other-vehicle": 20,
+    "person": 30,
+    "bicyclist": 31,
+    "motorcyclist": 32,
+    "road": 40,
+    "parking": 44,
+    "sidewalk": 48,
+    "other-ground": 49,
+    "building": 50,
+    "fence": 51,
+    "other-structure": 52,
+    "lane-marking": 60,
+    "vegetation": 70,
+    "trunk": 71,
+    "terrain": 72,
+    "pole": 80,
+    "traffic-sign": 81,
+    "other-object": 99,
+    "moving-car": 252,
+    "moving-bicyclist": 253,
+    "moving-person": 254,
+    "moving-motorcyclist": 255,
+    "moving-on-rails": 256,
+    "moving-bus": 257,
+    "moving-truck": 258,
+    "moving-other-vehicle": 259,
+}
 
 
 def get_progress(
@@ -45,9 +81,7 @@ def download_project(
     sly.fs.mkdir(local_path, remove_content_if_exists=True)
 
     if project.type != str(sly.ProjectType.POINT_CLOUD_EPISODES):
-        raise ValueError(
-            f"Only Point Cloud Episodes projects are supported. Got: {project.type}"
-        )
+        raise ValueError(f"Only Point Cloud Episodes projects are supported. Got: {project.type}")
 
     sly.download_pointcloud_episode_project(
         api,
@@ -65,19 +99,26 @@ def download_project(
 def create_class_mapping(
     meta: sly.ProjectMeta,
 ) -> Tuple[Dict[str, int], Dict[int, str]]:
-    """
-    Create mapping between Supervisely class names and SemanticKITTI label IDs.
-    Returns: (name_to_id, id_to_name) dictionaries
-    """
+
     name_to_id = {}
     id_to_name = {}
 
-    for idx, obj_class in enumerate(meta.obj_classes, start=1):
-        name_to_id[obj_class.name] = idx
-        id_to_name[idx] = obj_class.name
+    for obj_class in meta.obj_classes:
+        class_name = obj_class.name
+        if class_name in SEMANTIC_KITTI_LABEL_MAP:
+            label_id = SEMANTIC_KITTI_LABEL_MAP[class_name]
+            name_to_id[class_name] = label_id
+            id_to_name[label_id] = class_name
+        else:
+            sly.logger.warning(
+                f"Class '{class_name}' not found in SemanticKITTI label map. Skipping."
+            )
 
-    name_to_id["unlabeled"] = 0
-    id_to_name[0] = "unlabeled"
+    if "unlabeled" not in name_to_id:
+        name_to_id["unlabeled"] = 0
+        id_to_name[0] = "unlabeled"
+
+    sly.logger.info(f"Mapped {len(name_to_id)} classes to SemanticKITTI IDs")
 
     return name_to_id, id_to_name
 
@@ -89,19 +130,7 @@ def get_labels_from_annotation(
     class_mapping: Dict[str, int],
     obj_to_instance_id: Dict[int, int],
 ) -> np.ndarray:
-    """
-    Extract semantic labels from Supervisely point cloud episode annotation.
 
-    Args:
-        num_points: Total number of points in the point cloud
-        episode_ann: PointcloudEpisodeAnnotation object
-        frame_index: Frame index in the episode
-        class_mapping: Dictionary mapping class names to label IDs
-        obj_to_instance_id: Dictionary mapping object keys to instance IDs
-
-    Returns:
-        Array of label IDs for each point (uint32)
-    """
     labels = np.zeros(num_points, dtype=np.uint32)
 
     figures = episode_ann.get_figures_on_frame(frame_index)
@@ -235,9 +264,7 @@ def process_dataset(
     progress, progress_cb = get_progress(
         len(items_names), f"Processing dataset {dataset_fs.name}..."
     )
-    episode_ann = sly.PointcloudEpisodeAnnotation.load_json_file(
-        dataset_fs.get_ann_path(), meta
-    )
+    episode_ann = sly.PointcloudEpisodeAnnotation.load_json_file(dataset_fs.get_ann_path(), meta)
 
     obj_to_instance_id = {}
 

@@ -19,6 +19,7 @@ class MyExport(sly.app.Export):
 
         class_mapping, id_to_name = f.create_class_mapping(meta)
 
+
         # Process each dataset as a separate sequence
         for seq_idx, dataset_fs in enumerate(sly_project.datasets):
             seq_name = f"{seq_idx:02d}"

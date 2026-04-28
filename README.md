@@ -24,6 +24,7 @@ The application converts point cloud episodes and their point-level segmentation
 - Point clouds are saved in binary `.bin` format (x, y, z, intensity as float32)
 - Semantic labels are saved in binary `.label` format (uint32: lower 16 bits = semantic class, upper 16 bits = instance ID)
 - Automatic class mapping from Supervisely classes to SemanticKITTI label IDs
+- Generates `semantic-kitti.yaml` configuration file with class mappings and colors
 - Direct export of point-level segmentation annotations
 
 ### Output Format
@@ -32,6 +33,7 @@ The export creates a directory structure following SemanticKITTI conventions:
 
 ```
 output_directory/
+├── semantic-kitti.yaml          # Class mappings and configuration
 └── sequences/
     ├── 00/                      # First dataset (sequence)
     │   ├── velodyne/           # Point cloud files
