@@ -7,8 +7,8 @@
 [![](https://img.shields.io/badge/supervisely-ecosystem-brightgreen)](https://ecosystem.supervise.ly/apps/supervisely-ecosystem/export-to-semantic-kitti)
 [![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervise.ly/slack)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/supervisely-ecosystem/export-to-semantic-kitti)
-[![views](https://app.supervise.ly/img/badges/views/supervisely-ecosystem/export-to-semantic-kitti.png)](https://supervise.ly)
-[![runs](https://app.supervise.ly/img/badges/runs/supervisely-ecosystem/export-to-semantic-kitti.png)](https://supervise.ly)
+[![views](https://app.supervisely.com/img/badges/views/supervisely-ecosystem/export-to-semantic-kitti.png)](https://supervisely.com)
+[![downloads](https://app.supervisely.com/img/badges/downloads/supervisely-ecosystem/export-to-semantic-kitti.png)](https://supervisely.com)
 
 </div>
 
@@ -70,6 +70,8 @@ To run the application, follow these steps:
 1. Find the application in the Ecosystem
 2. Choose the necessary project or dataset and press `Run` button
 
+<img src="https://github.com/supervisely-ecosystem/export-to-semantic-kitti/releases/download/v0.0.1/sk.gif" />
+
 **Option 2: Project/Dataset context menu:**
 
 1. Go to Point Cloud Episode project or dataset you want to export
@@ -87,6 +89,8 @@ The archive will be saved to `Files` in:
 ## Limitations
 
 - **Only Point Cloud Episodes projects are supported** (single point cloud projects are not supported)
-- Only point-level segmentation annotations are exported (3D Cuboid annotations are ignored)
+- Only point-level segmentation annotations created with **Point Cloud Pen** tool are exported (3D Cuboid annotations are ignored)
 - Points without segmentation labels will have label 0 (unlabeled)
 - Each dataset becomes a separate sequence in the output
+- Standard SemanticKITTI class names are automatically mapped to official label IDs
+- Custom class names (not in SemanticKITTI) are assigned IDs starting from 100
