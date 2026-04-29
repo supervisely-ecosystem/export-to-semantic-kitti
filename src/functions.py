@@ -99,26 +99,60 @@ def download_project(
 def create_class_mapping(
     meta: sly.ProjectMeta,
 ) -> Tuple[Dict[str, int], Dict[int, str]]:
-
+    """
+    Create mapping between Supervisely class names and SemanticKITTI label IDs.
+    Uses case-insensitive matching for standard classes.
+    Custom classes get IDs starting from 100.
+    """
     name_to_id = {}
     id_to_name = {}
+    custom_classes = []
 
+    # Create lowercase lookup for case-insensitive matching
+    lower_to_standard = {k.lower(): (k, v) for k, v in SEMANTIC_KITTI_LABEL_MAP.items()}
+
+    # Map classes (case-insensitive for standard classes)
     for obj_class in meta.obj_classes:
         class_name = obj_class.name
-        if class_name in SEMANTIC_KITTI_LABEL_MAP:
-            label_id = SEMANTIC_KITTI_LABEL_MAP[class_name]
+        class_lower = class_name.lower()
+
+        if class_lower in lower_to_standard:
+            standard_name, label_id = lower_to_standard[class_lower]
             name_to_id[class_name] = label_id
             id_to_name[label_id] = class_name
+            sly.logger.info(f"Mapped '{class_name}' to standard ID {label_id} ('{standard_name}')")
         else:
-            sly.logger.warning(
-                f"Class '{class_name}' not found in SemanticKITTI label map. Skipping."
-            )
+            custom_classes.append(class_name)
 
-    if "unlabeled" not in name_to_id:
+    # Assign custom IDs (100-251) for non-standard classes
+    if custom_classes:
+        next_custom_id = 100
+        used_ids = set(SEMANTIC_KITTI_LABEL_MAP.values())
+
+        for class_name in custom_classes:
+            while next_custom_id in used_ids or next_custom_id in id_to_name:
+                next_custom_id += 1
+                if next_custom_id > 251:
+                    sly.logger.error(
+                        f"Too many custom classes! Cannot assign ID for '{class_name}'"
+                    )
+                    break
+
+            if next_custom_id <= 251:
+                name_to_id[class_name] = next_custom_id
+                id_to_name[next_custom_id] = class_name
+                sly.logger.warning(f"Custom class '{class_name}' mapped to ID {next_custom_id}")
+                next_custom_id += 1
+
+    # Always include unlabeled
+    if "unlabeled" not in name_to_id and 0 not in id_to_name:
         name_to_id["unlabeled"] = 0
         id_to_name[0] = "unlabeled"
 
-    sly.logger.info(f"Mapped {len(name_to_id)} classes to SemanticKITTI IDs")
+    standard_count = len(meta.obj_classes) - len(custom_classes)
+    sly.logger.info(
+        f"Mapped {len(name_to_id)} classes: {standard_count} standard, {len(custom_classes)} custom"
+    )
 
     return name_to_id, id_to_name
 
@@ -135,13 +169,22 @@ def get_labels_from_annotation(
 
     figures = episode_ann.get_figures_on_frame(frame_index)
 
+    sly.logger.info(f"Frame {frame_index}: found {len(figures)} figures")
+
     for fig in figures:
         if fig is None or fig.parent_object is None:
+            sly.logger.warning(f"Frame {frame_index}: skipping None figure or object")
             continue
 
         parent_obj = fig.parent_object
         class_name = parent_obj.obj_class.name
-        semantic_label = class_mapping.get(class_name, 0)
+        semantic_label = class_mapping.get(class_name, None)
+
+        if semantic_label is None:
+            sly.logger.error(
+                f"Frame {frame_index}: Class '{class_name}' NOT FOUND in class_mapping! This should not happen. Skipping object."
+            )
+            continue
 
         obj_key = parent_obj.key()
         if obj_key not in obj_to_instance_id:
@@ -149,6 +192,7 @@ def get_labels_from_annotation(
         instance_id = obj_to_instance_id[obj_key]
 
         geometry = fig.geometry
+        geom_type = type(geometry).__name__
         point_indices = None
 
         if hasattr(geometry, "indices") and geometry.indices is not None:
@@ -161,17 +205,23 @@ def get_labels_from_annotation(
             label_value = (instance_id << 16) | semantic_label
             try:
                 labels[point_indices] = label_value
+                sly.logger.info(
+                    f"  Frame {frame_index}: {class_name} (ID={semantic_label}, instance={instance_id}, geom={geom_type}): labeled {len(point_indices)} points"
+                )
             except (IndexError, TypeError) as e:
                 sly.logger.warning(
                     f"Failed to assign labels for figure on frame {frame_index}: {e}"
                 )
                 continue
+        else:
+            sly.logger.warning(
+                f"  Frame {frame_index}: {class_name} (geom={geom_type}): NO point indices found!"
+            )
 
     labeled_count = np.count_nonzero(labels)
-    if num_points > 0:
-        sly.logger.debug(
-            f"Frame {frame_index}: Labeled {labeled_count} / {num_points} points ({100*labeled_count/num_points:.1f}%)"
-        )
+    sly.logger.info(
+        f"Frame {frame_index} summary: {labeled_count}/{num_points} points labeled ({100*labeled_count/num_points:.1f}%)"
+    )
 
     return labels
 
