@@ -11,49 +11,4 @@
       Each dataset becomes a separate sequence in SemanticKITTI format.
     </div>
   </sly-field>
-
-  <sly-field title="Point Cloud Data">
-    <sly-icon
-      slot="icon"
-      :options="{ color: '#4977ff', bgColor: '#ddf2ff', rounded: false }"
-    >
-      <i class="zmdi zmdi-view-comfy"></i>
-    </sly-icon>
-    <div style="margin-left: 15px">
-      Point clouds will be saved in binary format <code>.bin</code> (x, y, z,
-      intensity as float32)
-    </div>
-  </sly-field>
-
-  <sly-field title="Annotations / Labels">
-    <sly-icon
-      slot="icon"
-      :options="{ color: '#4977ff', bgColor: '#ddf2ff', rounded: false }"
-    >
-      <i class="zmdi zmdi-select-all"></i>
-    </sly-icon>
-    <div style="margin-left: 15px">
-      Semantic labels will be saved in binary format
-      <code>.label</code> (uint32: lower 16 bits = semantic class ID, upper 16
-      bits = instance ID)
-    </div>
-  </sly-field>
-
-  <sly-field title="Output Structure">
-    <sly-icon
-      slot="icon"
-      :options="{ color: '#4977ff', bgColor: '#ddf2ff', rounded: false }"
-    >
-      <i class="zmdi zmdi-folder"></i>
-    </sly-icon>
-    <div style="margin-left: 15px">
-      Export will create SemanticKITTI format structure:<br />
-      <code>
-        sequences/<br />
-        &nbsp;&nbsp;00/<br />
-        &nbsp;&nbsp;&nbsp;&nbsp;velodyne/ # point clouds (.bin)<br />
-        &nbsp;&nbsp;&nbsp;&nbsp;labels/ # semantic labels (.label)
-      </code>
-    </div>
-  </sly-field>
 </div>

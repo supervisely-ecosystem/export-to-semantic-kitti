@@ -5,7 +5,6 @@ import numpy as np
 import supervisely as sly
 from tqdm import tqdm
 
-import src.globals as g
 
 SEMANTIC_KITTI_LABEL_MAP = {
     "unlabeled": 0,
@@ -111,7 +110,6 @@ def create_class_mapping(
     # Create lowercase lookup for case-insensitive matching
     lower_to_standard = {k.lower(): (k, v) for k, v in SEMANTIC_KITTI_LABEL_MAP.items()}
 
-    # Map classes (case-insensitive for standard classes)
     for obj_class in meta.obj_classes:
         class_name = obj_class.name
         class_lower = class_name.lower()
@@ -124,7 +122,6 @@ def create_class_mapping(
         else:
             custom_classes.append(class_name)
 
-    # Assign custom IDs (100-251) for non-standard classes
     if custom_classes:
         next_custom_id = 100
         used_ids = set(SEMANTIC_KITTI_LABEL_MAP.values())
@@ -141,10 +138,9 @@ def create_class_mapping(
             if next_custom_id <= 251:
                 name_to_id[class_name] = next_custom_id
                 id_to_name[next_custom_id] = class_name
-                sly.logger.warning(f"Custom class '{class_name}' mapped to ID {next_custom_id}")
+                sly.logger.info(f"Custom class '{class_name}' mapped to ID {next_custom_id}")
                 next_custom_id += 1
 
-    # Always include unlabeled
     if "unlabeled" not in name_to_id and 0 not in id_to_name:
         name_to_id["unlabeled"] = 0
         id_to_name[0] = "unlabeled"
@@ -166,14 +162,12 @@ def get_labels_from_annotation(
 ) -> np.ndarray:
 
     labels = np.zeros(num_points, dtype=np.uint32)
-
     figures = episode_ann.get_figures_on_frame(frame_index)
 
-    sly.logger.info(f"Frame {frame_index}: found {len(figures)} figures")
+    sly.logger.debug(f"Frame {frame_index}: processing {len(figures)} figures")
 
     for fig in figures:
         if fig is None or fig.parent_object is None:
-            sly.logger.warning(f"Frame {frame_index}: skipping None figure or object")
             continue
 
         parent_obj = fig.parent_object
@@ -182,7 +176,7 @@ def get_labels_from_annotation(
 
         if semantic_label is None:
             sly.logger.error(
-                f"Frame {frame_index}: Class '{class_name}' NOT FOUND in class_mapping! This should not happen. Skipping object."
+                f"Frame {frame_index}: Class '{class_name}' not found in mapping. Skipping."
             )
             continue
 
@@ -192,31 +186,24 @@ def get_labels_from_annotation(
         instance_id = obj_to_instance_id[obj_key]
 
         geometry = fig.geometry
-        geom_type = type(geometry).__name__
-        point_indices = None
-
-        if hasattr(geometry, "indices") and geometry.indices is not None:
-            point_indices = geometry.indices
-        elif hasattr(geometry, "point_indices") and geometry.point_indices is not None:
-            point_indices = geometry.point_indices
+        point_indices = getattr(geometry, "indices", None) or getattr(
+            geometry, "point_indices", None
+        )
 
         if point_indices is not None and len(point_indices) > 0:
-            # SemanticKITTI format: lower 16 bits = semantic, upper 16 bits = instance
             label_value = (instance_id << 16) | semantic_label
             try:
                 labels[point_indices] = label_value
-                sly.logger.info(
-                    f"  Frame {frame_index}: {class_name} (ID={semantic_label}, instance={instance_id}, geom={geom_type}): labeled {len(point_indices)} points"
+                sly.logger.debug(
+                    f"  {class_name} (ID={semantic_label}, instance={instance_id}): {len(point_indices)} points"
                 )
             except (IndexError, TypeError) as e:
                 sly.logger.warning(
-                    f"Failed to assign labels for figure on frame {frame_index}: {e}"
+                    f"Frame {frame_index}: Failed to assign labels for {class_name}: {e}"
                 )
-                continue
         else:
-            sly.logger.warning(
-                f"  Frame {frame_index}: {class_name} (geom={geom_type}): NO point indices found!"
-            )
+            geom_type = type(geometry).__name__
+            sly.logger.debug(f"  {class_name} ({geom_type}): skipped (no point indices)")
 
     labeled_count = np.count_nonzero(labels)
     sly.logger.info(
@@ -227,11 +214,6 @@ def get_labels_from_annotation(
 
 
 def save_pointcloud_bin(points: np.ndarray, output_path: Path):
-    """
-    Save point cloud in SemanticKITTI binary format.
-    Format: N x 4 array of (x, y, z, intensity) as float32
-    """
-    # Ensure we have 4 columns (x, y, z, intensity)
     if points.shape[1] == 3:
         intensity = np.zeros((points.shape[0], 1), dtype=np.float32)
         points = np.hstack([points, intensity])
@@ -241,10 +223,7 @@ def save_pointcloud_bin(points: np.ndarray, output_path: Path):
 
 
 def save_labels_bin(labels: np.ndarray, output_path: Path):
-    """
-    Save labels in SemanticKITTI binary format.
-    Format: N x 1 array of uint32 values
-    """
+
     labels = labels.astype(np.uint32)
     labels.tofile(output_path)
 
