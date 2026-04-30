@@ -3,45 +3,13 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import supervisely as sly
+from supervisely.convert.pointcloud_episodes.semantic_kitti.semantic_kitti_helper import (
+    SEMANTIC_KITTI_LABEL_MAP,
+)
 from tqdm import tqdm
 
-
-SEMANTIC_KITTI_LABEL_MAP = {
-    "unlabeled": 0,
-    "outlier": 1,
-    "car": 10,
-    "bicycle": 11,
-    "bus": 13,
-    "motorcycle": 15,
-    "on-rails": 16,
-    "truck": 18,
-    "other-vehicle": 20,
-    "person": 30,
-    "bicyclist": 31,
-    "motorcyclist": 32,
-    "road": 40,
-    "parking": 44,
-    "sidewalk": 48,
-    "other-ground": 49,
-    "building": 50,
-    "fence": 51,
-    "other-structure": 52,
-    "lane-marking": 60,
-    "vegetation": 70,
-    "trunk": 71,
-    "terrain": 72,
-    "pole": 80,
-    "traffic-sign": 81,
-    "other-object": 99,
-    "moving-car": 252,
-    "moving-bicyclist": 253,
-    "moving-person": 254,
-    "moving-motorcyclist": 255,
-    "moving-on-rails": 256,
-    "moving-bus": 257,
-    "moving-truck": 258,
-    "moving-other-vehicle": 259,
-}
+# Create name -> ID mapping from SDK's ID -> (name, color) mapping
+SEMANTIC_KITTI_NAME_TO_ID = {name.lower(): id for id, (name, _) in SEMANTIC_KITTI_LABEL_MAP.items()}
 
 
 def get_progress(
@@ -79,9 +47,6 @@ def download_project(
 
     sly.fs.mkdir(local_path, remove_content_if_exists=True)
 
-    if project.type != str(sly.ProjectType.POINT_CLOUD_EPISODES):
-        raise ValueError(f"Only Point Cloud Episodes projects are supported. Got: {project.type}")
-
     sly.download_pointcloud_episode_project(
         api,
         project.id,
@@ -107,24 +72,21 @@ def create_class_mapping(
     id_to_name = {}
     custom_classes = []
 
-    # Create lowercase lookup for case-insensitive matching
-    lower_to_standard = {k.lower(): (k, v) for k, v in SEMANTIC_KITTI_LABEL_MAP.items()}
-
     for obj_class in meta.obj_classes:
         class_name = obj_class.name
         class_lower = class_name.lower()
 
-        if class_lower in lower_to_standard:
-            standard_name, label_id = lower_to_standard[class_lower]
+        if class_lower in SEMANTIC_KITTI_NAME_TO_ID:
+            label_id = SEMANTIC_KITTI_NAME_TO_ID[class_lower]
             name_to_id[class_name] = label_id
             id_to_name[label_id] = class_name
-            sly.logger.info(f"Mapped '{class_name}' to standard ID {label_id} ('{standard_name}')")
+            sly.logger.info(f"Mapped '{class_name}' to standard ID {label_id}")
         else:
             custom_classes.append(class_name)
 
     if custom_classes:
         next_custom_id = 100
-        used_ids = set(SEMANTIC_KITTI_LABEL_MAP.values())
+        used_ids = set(SEMANTIC_KITTI_NAME_TO_ID.values())
 
         for class_name in custom_classes:
             while next_custom_id in used_ids or next_custom_id in id_to_name:
@@ -186,24 +148,22 @@ def get_labels_from_annotation(
         instance_id = obj_to_instance_id[obj_key]
 
         geometry = fig.geometry
-        point_indices = getattr(geometry, "indices", None) or getattr(
-            geometry, "point_indices", None
-        )
-
-        if point_indices is not None and len(point_indices) > 0:
-            label_value = (instance_id << 16) | semantic_label
-            try:
-                labels[point_indices] = label_value
-                sly.logger.debug(
-                    f"  {class_name} (ID={semantic_label}, instance={instance_id}): {len(point_indices)} points"
-                )
-            except (IndexError, TypeError) as e:
-                sly.logger.warning(
-                    f"Frame {frame_index}: Failed to assign labels for {class_name}: {e}"
-                )
+        if isinstance(geometry, sly.geometry.pointcloud.Pointcloud):
+            point_indices = geometry.indices
+            if point_indices is not None and len(point_indices) > 0:
+                label_value = (instance_id << 16) | semantic_label
+                try:
+                    labels[point_indices] = label_value
+                    sly.logger.debug(
+                        f"  {class_name} (ID={semantic_label}, instance={instance_id}): {len(point_indices)} points"
+                    )
+                except (IndexError, TypeError) as e:
+                    sly.logger.warning(
+                        f"Frame {frame_index}: Failed to assign labels for {class_name}: {e}"
+                    )
         else:
             geom_type = type(geometry).__name__
-            sly.logger.debug(f"  {class_name} ({geom_type}): skipped (no point indices)")
+            sly.logger.debug(f"  {class_name} ({geom_type}): skipped (not Pointcloud geometry)")
 
     labeled_count = np.count_nonzero(labels)
     sly.logger.info(
@@ -223,28 +183,8 @@ def save_pointcloud_bin(points: np.ndarray, output_path: Path):
 
 
 def save_labels_bin(labels: np.ndarray, output_path: Path):
-
     labels = labels.astype(np.uint32)
     labels.tofile(output_path)
-
-
-def handle_exception(exc: Exception, api: sly.Api, task_id: int):
-    from supervisely.io.exception_handlers import (
-        handle_exception as sly_handle_exception,
-    )
-
-    handled_exc = sly_handle_exception(exc)
-    if handled_exc is not None:
-        api.task.set_output_error(task_id, handled_exc.title, handled_exc.message)
-        err_msg = handled_exc.get_message_for_exception()
-        sly.logger.error(err_msg, exc_info=True)
-    else:
-        err_msg = repr(exc)
-        if len(err_msg) > 255:
-            err_msg = err_msg[:252] + "..."
-        title = "Error occurred"
-        api.task.set_output_error(task_id, title, err_msg)
-        sly.logger.error(f"{repr(exc)}", exc_info=True)
 
 
 def write_semantic_kitti_dataset(
