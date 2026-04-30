@@ -70,7 +70,7 @@ To run the application, follow these steps:
 1. Find the application in the Ecosystem
 2. Choose the necessary project or dataset and press `Run` button
 
-<img src="https://github.com/supervisely-ecosystem/export-to-semantic-kitti/releases/download/v0.0.1/sk.gif" />
+![App in Ecosystem](https://github.com/supervisely-ecosystem/export-to-semantic-kitti/releases/download/v0.0.1/sk.gif)
 
 **Option 2: Project/Dataset context menu:**
 
