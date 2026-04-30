@@ -8,8 +8,8 @@ from supervisely.convert.pointcloud_episodes.semantic_kitti.semantic_kitti_helpe
 )
 from tqdm import tqdm
 
-# Create name -> ID mapping from SDK's ID -> (name, color) mapping
-SEMANTIC_KITTI_NAME_TO_ID = {name.lower(): id for id, (name, _) in SEMANTIC_KITTI_LABEL_MAP.items()}
+
+SEMANTIC_KITTI_NAME_TO_ID = {name: id for id, (name, _) in SEMANTIC_KITTI_LABEL_MAP.items()}
 
 
 def get_progress(
