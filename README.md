@@ -94,3 +94,5 @@ The archive will be saved to `Files` in:
 - Each dataset becomes a separate sequence in the output
 - Standard SemanticKITTI class names are automatically mapped to official label IDs
 - Custom class names (not in SemanticKITTI) are assigned IDs starting from 100
+
+In the [SemanticKITTI format documentation](https://docs.supervisely.com/import-and-export/import/supported-annotation-formats/pointcloud_episodes/semantic-kitti), you can find detailed information about dataset structure, supported formats, import/export options, and best practices for working with SemanticKITTI data in Supervisely.
