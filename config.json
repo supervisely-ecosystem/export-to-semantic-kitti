@@ -12,7 +12,7 @@
   "modal_template_state": {},
   "modal_width": 700,
   "description": "Export Point Cloud Episodes to SemanticKITTI format with semantic labels",
-  "docker_image": "supervisely/import-export:6.73.560",
+  "docker_image": "supervisely/import-export:6.73.564",
   "main_script": "src/main.py",
   "task_location": "workspace_tasks",
   "headless": true,
