@@ -30,7 +30,7 @@ The application converts point cloud episodes and their point-level segmentation
 
 The export creates a directory structure following SemanticKITTI conventions:
 
-```
+```plaintext
 📂 output_directory/
 └── 📂 sequences/
     ├── 📁 00/                         # First dataset (sequence)
