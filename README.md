@@ -1,6 +1,6 @@
 <div align="center" markdown>
 
-<img align="center" src="https://github.com/supervisely-ecosystem/export-to-semantic-kitti/releases/download/v0.0.1/export_semantic_kitti_poster.png">
+<img align="center" src="https://github.com/supervisely-ecosystem/export-to-semantic-kitti/releases/download/v0.0.1/poster-export-pcde-to-semantic-kitti-res.jpg">
 
 # Export to SemanticKITTI
 
@@ -31,19 +31,21 @@ The application converts point cloud episodes and their point-level segmentation
 The export creates a directory structure following SemanticKITTI conventions:
 
 ```
-output_directory/
-└── sequences/
-    ├── 00/                      # First dataset (sequence)
-    │   ├── velodyne/           # Point cloud files
-    │   │   ├── 000000.bin
-    │   │   ├── 000001.bin
-    │   │   └── ...
-    │   └── labels/             # Semantic label files
-    │       ├── 000000.label
-    │       ├── 000001.label
-    │       └── ...
-    ├── 01/                      # Second dataset (if present)
-    └── ...
+📂 output_directory/
+└── 📂 sequences/
+    ├── 📁 00/                         # First dataset (sequence)
+    │   ├── 📂 velodyne/               # Point cloud files
+    │   │   ├── 📦 000000.bin
+    │   │   ├── 📦 000001.bin
+    │   │   └── 📦 ...
+    │   └── 📂 labels/                 # Semantic label files
+    │       ├── 🏷️ 000000.label
+    │       ├── 🏷️ 000001.label
+    │       └── 🏷️ ...
+    ├── 📁 01/                         # Second dataset (if present)
+    │   ├── 📂 velodyne/
+    │   └── 📂 labels/
+    └── 📁 ...
 ```
 
 ### File Formats
