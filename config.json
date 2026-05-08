@@ -23,6 +23,6 @@
   "task_location": "workspace_tasks",
   "headless": true,
   "icon_cover": true,
-  "icon": "https://github.com/supervisely-ecosystem/export-to-semantic-kitti/releases/download/v0.0.1/export_semantic_kitti_icon.png",
-  "poster": "https://github.com/supervisely-ecosystem/export-to-semantic-kitti/releases/download/v0.0.1/export_semantic_kitti_poster.png"
+  "icon": "https://github.com/supervisely-ecosystem/export-to-semantic-kitti/releases/download/v0.0.1/icon-export-pcde-to-semantic-kitti-res.jpg",
+  "poster": "https://github.com/supervisely-ecosystem/export-to-semantic-kitti/releases/download/v0.0.1/poster-export-pcde-to-semantic-kitti-res.jpg"
 }
