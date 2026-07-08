@@ -5,6 +5,7 @@
   "instance_version": "6.16.19",
   "categories": [
     "pointclouds",
+    "episodes",
     "export"
   ],
   "context_menu": {
