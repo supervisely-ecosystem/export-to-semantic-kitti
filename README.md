@@ -4,6 +4,13 @@
 
 # Export to SemanticKITTI
 
+<p align="center">
+  <a href="#Overview">Overview</a> •
+  <a href="#How-To-Run">How To Run</a> •
+  <a href="#Output">Output</a> •
+  <a href="#Limitations">Limitations</a>
+</p>
+
 [![](https://img.shields.io/badge/supervisely-ecosystem-brightgreen)](https://ecosystem.supervise.ly/apps/supervisely-ecosystem/export-to-semantic-kitti)
 [![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervise.ly/slack)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/supervisely-ecosystem/export-to-semantic-kitti)
