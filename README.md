@@ -15,7 +15,7 @@
 [![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervise.ly/slack)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/supervisely-ecosystem/export-to-semantic-kitti)
 [![views](https://app.supervisely.com/img/badges/views/supervisely-ecosystem/export-to-semantic-kitti.png)](https://supervisely.com)
-[![downloads](https://app.supervisely.com/img/badges/downloads/supervisely-ecosystem/export-to-semantic-kitti.png)](https://supervisely.com)
+[![runs](https://app.supervisely.com/img/badges/runs/supervisely-ecosystem/export-to-semantic-kitti.png)](https://supervisely.com)
 
 </div>
 
